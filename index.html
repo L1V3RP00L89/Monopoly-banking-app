@@ -33,14 +33,23 @@ input {
   border-radius: 8px;
   border: 1px solid #ccc;
 }
+select {
+  padding: 10px;
+  margin: 4px 0;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  background: white;
+}
 .big { font-size: 28px; font-weight: bold; }
 
 .add {
-  background: #34C759; /* iOS green */
+  background: #34C759;
   color: white;
 }
 .subtract {
-  background: #FF3B30; /* iOS red */
+  background: #FF3B30;
   color: white;
 }
 button:active {
@@ -55,6 +64,23 @@ button:active {
 <div id="app" class="container"></div>
 
 <script>
+const PIECES = [
+  "Race Car",
+  "Top Hat",
+  "Scottish Terrier",
+  "Cat",
+  "Penguin",
+  "Rubber Duck",
+  "Sack of Money",
+  "Tyrannosaurus Rex",
+  "Thimble",
+  "Iron",
+  "Boot",
+  "Battleship",
+  "Wheelbarrow",
+  "Cannon"
+];
+
 let state = {
   players: [],
   startBalance: 1500,
@@ -68,7 +94,27 @@ function save() {
 
 function load() {
   let data = localStorage.getItem('bankerApp');
-  if (data) state = JSON.parse(data);
+  if (data) {
+    state = JSON.parse(data);
+    state.players = state.players.map(player => ({
+      name: player.name || '',
+      piece: player.piece || '',
+      balance: typeof player.balance === 'number' ? player.balance : state.startBalance
+    }));
+  }
+}
+
+function displayName(player) {
+  return `${player.name}${player.piece ? ' (' + player.piece + ')' : ''}`;
+}
+
+function pieceOptions(selectedPiece) {
+  return `
+    <option value="">Select Piece</option>
+    ${PIECES.map(piece =>
+      `<option value="${piece}" ${selectedPiece === piece ? 'selected' : ''}>${piece}</option>`
+    ).join('')}
+  `;
 }
 
 function render() {
@@ -91,6 +137,9 @@ function render() {
       list.innerHTML += `
         <div class="card">
           <input value="${p.name}" onchange="updateName(${i}, this.value)" placeholder="Player Name"/>
+          <select onchange="updatePiece(${i}, this.value)">
+            ${pieceOptions(p.piece)}
+          </select>
           <button class="danger" onclick="removePlayer(${i})">Remove</button>
         </div>
       `;
@@ -103,7 +152,7 @@ function render() {
     state.players.forEach((p, i) => {
       app.innerHTML += `
         <div class="card">
-          <div>${p.name}</div>
+          <div>${displayName(p)}</div>
           <div class="big">£${p.balance}</div>
           <button onclick="selectPlayer(${i})">Open</button>
         </div>
@@ -120,17 +169,15 @@ function render() {
     let p = state.players[state.selected];
 
     app.innerHTML = `
-      <h2>${p.name}</h2>
+      <h2>${displayName(p)}</h2>
       <div class="big">£${p.balance}</div>
       
       <h3>Quick</h3>
-      <!-- ADD (green) -->
       <button class="add" onclick="changeBalance(50)">+50</button>
       <button class="add" onclick="changeBalance(100)">+100</button>
       <button class="add" onclick="changeBalance(200)">+200</button>
       <button class="add" onclick="changeBalance(500)">+500</button>
 
-      <!-- SUBTRACT (red) -->
       <button class="subtract" onclick="changeBalance(-50)">-50</button>
       <button class="subtract" onclick="changeBalance(-100)">-100</button>
       <button class="subtract" onclick="changeBalance(-200)">-200</button>
@@ -143,7 +190,9 @@ function render() {
 
       <h3>Transfer</h3>
       <select id="target">
-        ${state.players.map((x,i)=> i!==state.selected ? `<option value="${i}">${x.name}</option>` : '').join('')}
+        ${state.players.map((x, i) =>
+          i !== state.selected ? `<option value="${i}">${displayName(x)}</option>` : ''
+        ).join('')}
       </select>
       <button onclick="transfer()">Send</button>
 
@@ -156,12 +205,12 @@ function render() {
 }
 
 function addPlayer() {
-  state.players.push({ name: '', balance: state.startBalance });
+  state.players.push({ name: '', piece: '', balance: state.startBalance });
   render();
 }
 
 function removePlayer(i) {
-  state.players.splice(i,1);
+  state.players.splice(i, 1);
   render();
 }
 
@@ -170,8 +219,13 @@ function updateName(i, name) {
   save();
 }
 
+function updatePiece(i, piece) {
+  state.players[i].piece = piece;
+  save();
+}
+
 function startGame() {
-  state.startBalance = parseInt(document.getElementById('startBalance').value);
+  state.startBalance = parseInt(document.getElementById('startBalance').value) || 1500;
   state.players.forEach(p => p.balance = state.startBalance);
   state.screen = 'main';
   render();
@@ -204,7 +258,7 @@ function transfer() {
   let val = parseInt(document.getElementById('amount').value);
   let target = document.getElementById('target').value;
 
-  if (!val) return;
+  if (!val || target === '') return;
 
   state.players[state.selected].balance -= val;
   state.players[target].balance += val;
@@ -220,6 +274,7 @@ function resetBalances() {
 function newGame() {
   state.players = [];
   state.screen = 'setup';
+  state.selected = null;
   render();
 }
 
