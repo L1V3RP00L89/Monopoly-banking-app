@@ -53,7 +53,7 @@ input, select {
   margin: 6px 0 12px 0;
 }
 .small {
-  font-size: 20px;
+  font-size: 14px;
   color: #666;
 }
 .row {
@@ -70,6 +70,9 @@ button:active {
   transform: scale(0.97);
   opacity: 0.9;
 }
+button:disabled {
+  opacity: 0.5;
+}
 h2, h3 {
   margin-top: 0;
 }
@@ -84,11 +87,19 @@ h2, h3 {
 .history-list li {
   margin-bottom: 6px;
 }
+.message {
+  background: #FF3B30;
+  color: white;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  text-align: center;
+  font-weight: 600;
+}
 </style>
 </head>
 
 <body>
-
 <div id="app" class="container"></div>
 
 <script>
@@ -153,6 +164,9 @@ function load() {
     }));
     state.history = state.history || [];
     state.lastAction = state.lastAction || null;
+    state.message = state.message || '';
+    state.winner = state.winner || null;
+    state.confirmingBankruptcy = !!state.confirmingBankruptcy;
   }
 }
 
@@ -187,6 +201,31 @@ function sortedPlayersWithIndex() {
   return state.players
     .map((player, index) => ({ player, index }))
     .sort((a, b) => b.player.balance - a.player.balance);
+}
+
+function showMessage(text) {
+  state.message = text;
+}
+
+function clearMessage() {
+  state.message = '';
+}
+
+function canAfford(player, amount) {
+  return player.balance + amount >= 0;
+}
+
+function checkForWinner() {
+  if (state.players.length === 1) {
+    state.winner = state.players[0];
+    state.screen = 'winner';
+    state.selected = null;
+    state.message = '';
+    state.confirmingBankruptcy = false;
+    addHistoryEntry(`${displayName(state.winner)} won the game!`);
+    return true;
+  }
+  return false;
 }
 
 function render() {
@@ -260,6 +299,7 @@ function render() {
     const p = state.players[state.selected];
 
     app.innerHTML = `
+      ${state.message ? `<div class="message">${state.message}</div>` : ''}
       <h2>${displayName(p)}</h2>
       <div class="big">£${p.balance}</div>
 
@@ -307,22 +347,25 @@ function render() {
         <button class="secondary" onclick="undoLastAction()" ${state.lastAction ? '' : 'disabled'}>Undo</button>
       </div>
 
-   <div class="row">
-  ${
-    state.confirmingBankruptcy
-      ? `
-        <button class="danger" onclick="declareBankruptcy()">Confirm Bankruptcy</button>
-        <button class="secondary" onclick="cancelBankruptcy()">Cancel</button>
-      `
-      : `
-        <button class="danger" onclick="beginBankruptcy()">Declare Bankruptcy</button>
-        <button class="secondary" onclick="back()">Back</button>
-      `
+      ${state.confirmingBankruptcy ? `<div class="message">Confirm bankruptcy for this player?</div>` : ''}
+
+      <div class="row">
+        ${
+          state.confirmingBankruptcy
+            ? `
+              <button class="danger" onclick="declareBankruptcy()">Confirm Bankruptcy</button>
+              <button class="secondary" onclick="cancelBankruptcy()">Cancel</button>
+            `
+            : `
+              <button class="danger" onclick="beginBankruptcy()">Declare Bankruptcy</button>
+              <button class="secondary" onclick="back()">Back</button>
+            `
+        }
+      </div>
+    `;
   }
-</div>
-  }
-  
-    if (state.screen === 'winner') {
+
+  if (state.screen === 'winner') {
     app.innerHTML = `
       <div class="card">
         <h2>Game Over</h2>
@@ -376,6 +419,7 @@ function startGame() {
   state.lastAction = null;
   state.message = '';
   state.winner = null;
+  state.confirmingBankruptcy = false;
   state.screen = 'main';
   render();
 }
@@ -384,12 +428,14 @@ function selectPlayer(i) {
   state.selected = i;
   state.screen = 'player';
   state.confirmingBankruptcy = false;
+  state.message = '';
   render();
 }
 
 function back() {
   state.screen = 'main';
   state.confirmingBankruptcy = false;
+  state.message = '';
   render();
 }
 
@@ -412,68 +458,71 @@ function setLastTransferAction(fromIndex, toIndex, amount) {
 }
 
 function changeBalance(amount) {
-  let player = state.players[state.selected];
-  let newBalance = player.balance + amount;
-
-  if (newBalance < 0) {
-    alert("Not enough money!");
+  const player = state.players[state.selected];
+  if (!canAfford(player, amount)) {
+    showMessage("Not enough cash — sell or trade!");
+    render();
     return;
   }
 
-  player.balance = newBalance;
-  setLastBalanceAction(state.selected, amount, `Balance change`);
+  clearMessage();
+  player.balance += amount;
+  setLastBalanceAction(state.selected, amount, 'Balance change');
   addHistoryEntry(`${displayName(player)} ${amount >= 0 ? 'received' : 'paid'} £${Math.abs(amount)}.`);
   render();
 }
-function applyPresetAction(label, amount) {
-  let player = state.players[state.selected];
-  let newBalance = player.balance + amount;
 
-  if (newBalance < 0) {
-    alert("Not enough money!");
+function applyPresetAction(label, amount) {
+  const player = state.players[state.selected];
+  if (!canAfford(player, amount)) {
+    showMessage("Not enough cash — sell or trade!");
+    render();
     return;
   }
 
-  player.balance = newBalance;
+  clearMessage();
+  player.balance += amount;
   setLastBalanceAction(state.selected, amount, label);
   addHistoryEntry(`${displayName(player)}: ${label} ${amount >= 0 ? '+' : ''}${amount}.`);
   render();
 }
 
 function customChange(add) {
-  let val = parseInt(document.getElementById('amount').value);
+  const val = parseInt(document.getElementById('amount').value);
   if (!val) return;
 
-  let amount = add ? val : -val;
-  let player = state.players[state.selected];
-  let newBalance = player.balance + amount;
+  const amount = add ? val : -val;
+  const player = state.players[state.selected];
 
-  if (newBalance < 0) {
-    alert("Not enough money!");
+  if (!canAfford(player, amount)) {
+    showMessage("Not enough cash — sell or trade!");
+    render();
     return;
   }
 
-  player.balance = newBalance;
+  clearMessage();
+  player.balance += amount;
   setLastBalanceAction(state.selected, amount, 'Custom amount');
   addHistoryEntry(`${displayName(player)} ${amount >= 0 ? 'received' : 'paid'} £${Math.abs(amount)} (custom).`);
   render();
 }
 
 function transfer() {
-  let val = parseInt(document.getElementById('amount').value);
-  let target = document.getElementById('target').value;
+  const val = parseInt(document.getElementById('amount').value);
+  const target = document.getElementById('target').value;
 
   if (!val || target === '') return;
 
-  let fromPlayer = state.players[state.selected];
+  const fromPlayer = state.players[state.selected];
+  const toPlayer = state.players[target];
 
   if (fromPlayer.balance < val) {
-    alert("Not enough money to transfer!");
+    showMessage("Not enough cash — sell or trade!");
+    render();
     return;
   }
 
-  let toPlayer = state.players[target];
-
+  clearMessage();
   fromPlayer.balance -= val;
   toPlayer.balance += val;
 
@@ -499,12 +548,15 @@ function undoLastAction() {
   }
 
   state.lastAction = null;
+  state.message = '';
   render();
 }
 
 function resetBalances() {
   state.players.forEach(p => p.balance = state.startBalance);
   state.lastAction = null;
+  state.message = '';
+  state.confirmingBankruptcy = false;
   addHistoryEntry(`All balances reset to £${state.startBalance}.`);
   render();
 }
@@ -521,14 +573,26 @@ function newGame() {
   render();
 }
 
+function beginBankruptcy() {
+  state.confirmingBankruptcy = true;
+  state.message = '';
+  render();
+}
+
+function cancelBankruptcy() {
+  state.confirmingBankruptcy = false;
+  render();
+}
+
 function declareBankruptcy() {
   const player = state.players[state.selected];
   const playerName = displayName(player);
 
   state.players.splice(state.selected, 1);
 
-  state.message = "";
+  state.message = '';
   state.lastAction = null;
+  state.confirmingBankruptcy = false;
   addHistoryEntry(`${playerName} was declared bankrupt and removed from the game.`);
 
   if (checkForWinner()) {
@@ -538,20 +602,7 @@ function declareBankruptcy() {
 
   state.selected = null;
   state.screen = 'main';
-
   render();
-}
-
-function checkForWinner() {
-  if (state.players.length === 1) {
-    state.winner = state.players[0];
-    state.screen = 'winner';
-    state.selected = null;
-    state.message = '';
-    addHistoryEntry(`${displayName(state.winner)} won the game!`);
-    return true;
-  }
-  return false;
 }
 
 function playAgain() {
@@ -566,16 +617,6 @@ function playAgain() {
   render();
 }
 
-function beginBankruptcy() {
-  state.confirmingBankruptcy = true;
-  render();
-}
-
-function cancelBankruptcy() {
-  state.confirmingBankruptcy = false;
-  render();
-}
-
 function viewFinalBoard() {
   state.screen = 'main';
   render();
@@ -584,6 +625,5 @@ function viewFinalBoard() {
 load();
 render();
 </script>
-
 </body>
 </html>
