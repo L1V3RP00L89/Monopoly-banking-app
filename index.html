@@ -133,6 +133,7 @@ let state = {
   selected: null,
   history: [],
   lastAction: null
+  message: ''
 };
 
 function save() {
@@ -304,9 +305,10 @@ function render() {
         <button class="secondary" onclick="undoLastAction()" ${state.lastAction ? '' : 'disabled'}>Undo</button>
       </div>
 
-      <div class="row">
-        <button class="secondary" onclick="back()">Back</button>
-      </div>
+   <div class="row">
+  <button class="danger" onclick="declareBankruptcy()">Declare Bankruptcy</button>
+  <button class="secondary" onclick="back()">Back</button>
+</div>
     `;
   }
 
@@ -475,6 +477,22 @@ function newGame() {
   state.selected = null;
   state.history = [];
   state.lastAction = null;
+  render();
+}
+
+function declareBankruptcy() {
+  const player = state.players[state.selected];
+  const playerName = displayName(player);
+
+  state.players.splice(state.selected, 1);
+
+  state.message = "";
+  state.lastAction = null;
+  addHistoryEntry(`${playerName} was declared bankrupt and removed from the game.`);
+
+  state.selected = null;
+  state.screen = 'main';
+
   render();
 }
 
