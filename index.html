@@ -372,40 +372,67 @@ function setLastTransferAction(fromIndex, toIndex, amount) {
 }
 
 function changeBalance(amount) {
-  const player = state.players[state.selected];
-  player.balance += amount;
+  let player = state.players[state.selected];
+  let newBalance = player.balance + amount;
+
+  if (newBalance < 0) {
+    alert("Not enough money!");
+    return;
+  }
+
+  player.balance = newBalance;
   setLastBalanceAction(state.selected, amount, `Balance change`);
   addHistoryEntry(`${displayName(player)} ${amount >= 0 ? 'received' : 'paid'} £${Math.abs(amount)}.`);
   render();
 }
-
 function applyPresetAction(label, amount) {
-  const player = state.players[state.selected];
-  player.balance += amount;
+  let player = state.players[state.selected];
+  let newBalance = player.balance + amount;
+
+  if (newBalance < 0) {
+    alert("Not enough money!");
+    return;
+  }
+
+  player.balance = newBalance;
   setLastBalanceAction(state.selected, amount, label);
   addHistoryEntry(`${displayName(player)}: ${label} ${amount >= 0 ? '+' : ''}${amount}.`);
   render();
 }
 
 function customChange(add) {
-  const val = parseInt(document.getElementById('amount').value);
+  let val = parseInt(document.getElementById('amount').value);
   if (!val) return;
-  const amount = add ? val : -val;
-  const player = state.players[state.selected];
-  player.balance += amount;
+
+  let amount = add ? val : -val;
+  let player = state.players[state.selected];
+  let newBalance = player.balance + amount;
+
+  if (newBalance < 0) {
+    alert("Not enough money!");
+    return;
+  }
+
+  player.balance = newBalance;
   setLastBalanceAction(state.selected, amount, 'Custom amount');
   addHistoryEntry(`${displayName(player)} ${amount >= 0 ? 'received' : 'paid'} £${Math.abs(amount)} (custom).`);
   render();
 }
 
 function transfer() {
-  const val = parseInt(document.getElementById('amount').value);
-  const target = document.getElementById('target').value;
+  let val = parseInt(document.getElementById('amount').value);
+  let target = document.getElementById('target').value;
 
   if (!val || target === '') return;
 
-  const fromPlayer = state.players[state.selected];
-  const toPlayer = state.players[target];
+  let fromPlayer = state.players[state.selected];
+
+  if (fromPlayer.balance < val) {
+    alert("Not enough money to transfer!");
+    return;
+  }
+
+  let toPlayer = state.players[target];
 
   fromPlayer.balance -= val;
   toPlayer.balance += val;
