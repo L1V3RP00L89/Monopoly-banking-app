@@ -146,7 +146,8 @@ let state = {
   lastAction: null,
   message: '',
   winner: null,
-  confirmingBankruptcy: false
+  confirmingBankruptcy: false,
+  hasSeenWelcome: false
 };
 
 function save() {
@@ -167,6 +168,10 @@ function load() {
     state.message = state.message || '';
     state.winner = state.winner || null;
     state.confirmingBankruptcy = !!state.confirmingBankruptcy;
+  }
+
+  if (!state.hasSeenWelcome) {
+    state.screen = 'welcome';
   }
 }
 
@@ -631,6 +636,7 @@ function declareBankruptcy() {
 
 function goToSetup() {
   state.screen = 'setup';
+  state.hasSeenWelcome = true;
   render();
 }
 
