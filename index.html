@@ -175,11 +175,6 @@ function load() {
   state.screen = 'welcome';
 }
 
-  if (!state.hasSeenWelcome) {
-    state.screen = 'welcome';
-  }
-}
-
 function getPieceLabel(piece) {
   if (!piece) return '';
   const emoji = PIECE_EMOJIS[piece] || '';
