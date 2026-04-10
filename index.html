@@ -170,6 +170,20 @@ h2, h3 {
   font-size: 32px;
   margin: 10px 0;
 }
+
+textarea {
+  padding: 12px;
+  margin: 4px 0;
+  width: 100%;
+  min-height: 100px;
+  border-radius: 10px;
+  border: 2px solid #222;
+  font-size: 16px;
+  box-sizing: border-box;
+  background: #fff8e7;
+  resize: vertical;
+}
+
 </style>
 </head>
 
@@ -440,6 +454,9 @@ function render() {
         <button class="add" onclick="customChange(true)">Add</button>
         <button class="subtract" onclick="customChange(false)">Subtract</button>
       </div>
+
+      <h3>Owned Properties</h3>
+      <textarea id="properties" placeholder="Example: Park Lane, Kings Cross, Electric Company" oninput="updateProperties(this.value)">${p.properties || ''}</textarea>
 
       <h3>Transfer</h3>
       <select id="target">
@@ -735,6 +752,11 @@ function resumeGame() {
     state.screen = 'main';
   }
   render();
+}
+
+function updateProperties(value) {
+  state.players[state.selected].properties = value;
+  save();
 }
 
 function playAgain() {
