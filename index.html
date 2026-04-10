@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Banker</title>
+<style>
+body {
+  font-family: -apple-system, sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+}
+.container { padding: 16px; }
+.card {
+  background: white;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+}
+button {
+  padding: 10px;
+  margin: 4px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+}
+.primary { background: #007AFF; color: white; }
+.danger { background: #FF3B30; color: white; }
+input {
+  padding: 10px;
+  margin: 4px 0;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+.big { font-size: 28px; font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<div id="app" class="container"></div>
+
+<script>
+let state = {
+  players: [],
+  startBalance: 1500,
+  screen: 'setup',
+  selected: null
+};
+
+function save() {
+  localStorage.setItem('bankerApp', JSON.stringify(state));
+}
+
+function load() {
+  let data = localStorage.getItem('bankerApp');
+  if (data) state = JSON.parse(data);
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  if (state.screen === 'setup') {
+    app.innerHTML = `
+      <h2>Setup Game</h2>
+      <input id="startBalance" type="number" value="${state.startBalance}" placeholder="Starting Balance"/>
+
+      <div id="players"></div>
+
+      <button class="primary" onclick="addPlayer()">Add Player</button>
+      <button class="primary" onclick="startGame()">Start Game</button>
+    `;
+
+    let list = document.getElementById('players');
+    state.players.forEach((p, i) => {
+      list.innerHTML += `
+        <div class="card">
+          <input value="${p.name}" onchange="updateName(${i}, this.value)" placeholder="Player Name"/>
+          <button class="danger" onclick="removePlayer(${i})">Remove</button>
+        </div>
+      `;
+    });
+  }
+
+  if (state.screen === 'main') {
+    app.innerHTML = `<h2>Banker</h2>`;
+
+    state.players.forEach((p, i) => {
+      app.innerHTML += `
+        <div class="card">
+          <div>${p.name}</div>
+          <div class="big">£${p.balance}</div>
+          <button onclick="selectPlayer(${i})">Open</button>
+        </div>
+      `;
+    });
+
+    app.innerHTML += `
+      <button onclick="resetBalances()">Reset Balances</button>
+      <button onclick="newGame()">New Game</button>
+    `;
+  }
+
+  if (state.screen === 'player') {
+    let p = state.players[state.selected];
+
+    app.innerHTML = `
+      <h2>${p.name}</h2>
+      <div class="big">£${p.balance}</div>
+
+      <h3>Quick</h3>
+      <button onclick="changeBalance(50)">+50</button>
+      <button onclick="changeBalance(-50)">-50</button>
+
+      <h3>Custom</h3>
+      <input id="amount" type="number" placeholder="Amount"/>
+      <button onclick="customChange(true)">Add</button>
+      <button onclick="customChange(false)">Subtract</button>
+
+      <h3>Transfer</h3>
+      <select id="target">
+        ${state.players.map((x,i)=> i!==state.selected ? `<option value="${i}">${x.name}</option>` : '').join('')}
+      </select>
+      <button onclick="transfer()">Send</button>
+
+      <br><br>
+      <button onclick="back()">Back</button>
+    `;
+  }
+
+  save();
+}
+
+function addPlayer() {
+  state.players.push({ name: '', balance: state.startBalance });
+  render();
+}
+
+function removePlayer(i) {
+  state.players.splice(i,1);
+  render();
+}
+
+function updateName(i, name) {
+  state.players[i].name = name;
+  save();
+}
+
+function startGame() {
+  state.startBalance = parseInt(document.getElementById('startBalance').value);
+  state.players.forEach(p => p.balance = state.startBalance);
+  state.screen = 'main';
+  render();
+}
+
+function selectPlayer(i) {
+  state.selected = i;
+  state.screen = 'player';
+  render();
+}
+
+function back() {
+  state.screen = 'main';
+  render();
+}
+
+function changeBalance(amount) {
+  state.players[state.selected].balance += amount;
+  render();
+}
+
+function customChange(add) {
+  let val = parseInt(document.getElementById('amount').value);
+  if (!val) return;
+  state.players[state.selected].balance += add ? val : -val;
+  render();
+}
+
+function transfer() {
+  let val = parseInt(document.getElementById('amount').value);
+  let target = document.getElementById('target').value;
+
+  if (!val) return;
+
+  state.players[state.selected].balance -= val;
+  state.players[target].balance += val;
+
+  render();
+}
+
+function resetBalances() {
+  state.players.forEach(p => p.balance = state.startBalance);
+  render();
+}
+
+function newGame() {
+  state.players = [];
+  state.screen = 'setup';
+  render();
+}
+
+load();
+render();
+</script>
+
+</body>
+</html>
