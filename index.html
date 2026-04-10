@@ -124,13 +124,18 @@ function render() {
       <div class="big">£${p.balance}</div>
       
       <h3>Quick</h3>
-      <button onclick="changeBalance(50)">+50</button>
-      <button onclick="changeBalance(100)">+100</button>
-      <button onclick="changeBalance(200)">+200</button>
 
-      <button onclick="changeBalance(-50)">-50</button>
-      <button onclick="changeBalance(-100)">-100</button>
-      <button onclick="changeBalance(-200)">-200</button>
+<!-- ADD (green) -->
+<button class="add" onclick="changeBalance(50)">+50</button>
+<button class="add" onclick="changeBalance(100)">+100</button>
+<button class="add" onclick="changeBalance(200)">+200</button>
+<button class="add" onclick="changeBalance(500)">+500</button>
+
+<!-- SUBTRACT (red) -->
+<button class="subtract" onclick="changeBalance(-50)">-50</button>
+<button class="subtract" onclick="changeBalance(-100)">-100</button>
+<button class="subtract" onclick="changeBalance(-200)">-200</button>
+<button class="subtract" onclick="changeBalance(-500)">-500</button>
 
       <h3>Custom</h3>
       <input id="amount" type="number" placeholder="Amount"/>
