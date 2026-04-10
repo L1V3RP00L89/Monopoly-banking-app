@@ -10,51 +10,79 @@ body {
   margin: 0;
   background: #f4f4f4;
 }
-.container { padding: 16px; }
+.container {
+  padding: 16px;
+  max-width: 700px;
+  margin: 0 auto;
+}
 .card {
   background: white;
   padding: 16px;
   margin-bottom: 12px;
   border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 button {
-  padding: 10px;
+  padding: 14px 16px;
   margin: 4px;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 600;
 }
 .primary { background: #007AFF; color: white; }
 .danger { background: #FF3B30; color: white; }
-input {
-  padding: 10px;
-  margin: 4px 0;
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-select {
-  padding: 10px;
+.add { background: #34C759; color: white; }
+.subtract { background: #FF3B30; color: white; }
+.secondary { background: #E5E5EA; color: #111; }
+.special { background: #FFCC00; color: #111; }
+
+input, select {
+  padding: 12px;
   margin: 4px 0;
   width: 100%;
   border-radius: 8px;
   border: 1px solid #ccc;
   font-size: 16px;
+  box-sizing: border-box;
   background: white;
 }
-.big { font-size: 28px; font-weight: bold; }
-
-.add {
-  background: #34C759;
-  color: white;
+.big {
+  font-size: 30px;
+  font-weight: bold;
+  margin: 6px 0 12px 0;
 }
-.subtract {
-  background: #FF3B30;
-  color: white;
+.small {
+  font-size: 14px;
+  color: #666;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.row button {
+  flex: 1 1 120px;
+  margin: 0;
 }
 button:active {
   transform: scale(0.97);
   opacity: 0.9;
+}
+h2, h3 {
+  margin-top: 0;
+}
+.player-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+.history-list {
+  margin-top: 10px;
+  padding-left: 18px;
+}
+.history-list li {
+  margin-bottom: 6px;
 }
 </style>
 </head>
@@ -81,11 +109,30 @@ const PIECES = [
   "Cannon"
 ];
 
+const PIECE_EMOJIS = {
+  "Race Car": "🚗",
+  "Top Hat": "🎩",
+  "Scottish Terrier": "🐶",
+  "Cat": "🐱",
+  "Penguin": "🐧",
+  "Rubber Duck": "🦆",
+  "Sack of Money": "💰",
+  "Tyrannosaurus Rex": "🦖",
+  "Thimble": "🪡",
+  "Iron": "🧺",
+  "Boot": "🥾",
+  "Battleship": "🚢",
+  "Wheelbarrow": "🛒",
+  "Cannon": "💣"
+};
+
 let state = {
   players: [],
   startBalance: 1500,
   screen: 'setup',
-  selected: null
+  selected: null,
+  history: [],
+  lastAction: null
 };
 
 function save() {
@@ -93,28 +140,50 @@ function save() {
 }
 
 function load() {
-  let data = localStorage.getItem('bankerApp');
+  const data = localStorage.getItem('bankerApp');
   if (data) {
     state = JSON.parse(data);
-    state.players = state.players.map(player => ({
+    state.players = (state.players || []).map(player => ({
       name: player.name || '',
       piece: player.piece || '',
-      balance: typeof player.balance === 'number' ? player.balance : state.startBalance
+      balance: typeof player.balance === 'number' ? player.balance : 1500
     }));
+    state.history = state.history || [];
+    state.lastAction = state.lastAction || null;
   }
 }
 
+function getPieceLabel(piece) {
+  if (!piece) return '';
+  const emoji = PIECE_EMOJIS[piece] || '';
+  return emoji ? `${emoji} ${piece}` : piece;
+}
+
 function displayName(player) {
-  return `${player.name}${player.piece ? ' (' + player.piece + ')' : ''}`;
+  const pieceLabel = getPieceLabel(player.piece);
+  return `${player.name}${pieceLabel ? ' (' + pieceLabel + ')' : ''}`;
 }
 
 function pieceOptions(selectedPiece) {
   return `
     <option value="">Select Piece</option>
     ${PIECES.map(piece =>
-      `<option value="${piece}" ${selectedPiece === piece ? 'selected' : ''}>${piece}</option>`
+      `<option value="${piece}" ${selectedPiece === piece ? 'selected' : ''}>${getPieceLabel(piece)}</option>`
     ).join('')}
   `;
+}
+
+function addHistoryEntry(text) {
+  state.history.unshift(text);
+  if (state.history.length > 30) {
+    state.history = state.history.slice(0, 30);
+  }
+}
+
+function sortedPlayersWithIndex() {
+  return state.players
+    .map((player, index) => ({ player, index }))
+    .sort((a, b) => b.player.balance - a.player.balance);
 }
 
 function render() {
@@ -128,11 +197,13 @@ function render() {
 
       <div id="players"></div>
 
-      <button class="primary" onclick="addPlayer()">Add Player</button>
-      <button class="primary" onclick="startGame()">Start Game</button>
+      <div class="row">
+        <button class="primary" onclick="addPlayer()">Add Player</button>
+        <button class="primary" onclick="startGame()">Start Game</button>
+      </div>
     `;
 
-    let list = document.getElementById('players');
+    const list = document.getElementById('players');
     state.players.forEach((p, i) => {
       list.innerHTML += `
         <div class="card">
@@ -149,44 +220,78 @@ function render() {
   if (state.screen === 'main') {
     app.innerHTML = `<h2>Banker</h2>`;
 
-    state.players.forEach((p, i) => {
+    const sorted = sortedPlayersWithIndex();
+
+    sorted.forEach(({ player, index }, rank) => {
       app.innerHTML += `
         <div class="card">
-          <div>${displayName(p)}</div>
-          <div class="big">£${p.balance}</div>
-          <button onclick="selectPlayer(${i})">Open</button>
+          <div class="small">#${rank + 1}</div>
+          <div class="player-name">${displayName(player)}</div>
+          <div class="big">£${player.balance}</div>
+          <button class="primary" onclick="selectPlayer(${index})">Open</button>
         </div>
       `;
     });
 
     app.innerHTML += `
-      <button onclick="resetBalances()">Reset Balances</button>
-      <button onclick="newGame()">New Game</button>
+      <div class="row">
+        <button class="secondary" onclick="undoLastAction()" ${state.lastAction ? '' : 'disabled'}>Undo Last Action</button>
+        <button class="secondary" onclick="resetBalances()">Reset Balances</button>
+      </div>
+      <div class="row">
+        <button class="danger" onclick="newGame()">New Game</button>
+      </div>
+
+      <div class="card">
+        <h3>Recent Activity</h3>
+        ${state.history.length ? `
+          <ul class="history-list">
+            ${state.history.slice(0, 8).map(item => `<li>${item}</li>`).join('')}
+          </ul>
+        ` : `<div class="small">No activity yet.</div>`}
+      </div>
     `;
   }
 
   if (state.screen === 'player') {
-    let p = state.players[state.selected];
+    const p = state.players[state.selected];
 
     app.innerHTML = `
       <h2>${displayName(p)}</h2>
       <div class="big">£${p.balance}</div>
-      
-      <h3>Quick</h3>
-      <button class="add" onclick="changeBalance(50)">+50</button>
-      <button class="add" onclick="changeBalance(100)">+100</button>
-      <button class="add" onclick="changeBalance(200)">+200</button>
-      <button class="add" onclick="changeBalance(500)">+500</button>
 
-      <button class="subtract" onclick="changeBalance(-50)">-50</button>
-      <button class="subtract" onclick="changeBalance(-100)">-100</button>
-      <button class="subtract" onclick="changeBalance(-200)">-200</button>
-      <button class="subtract" onclick="changeBalance(-500)">-500</button>
+      <h3>Game Actions</h3>
+      <div class="row">
+        <button class="special" onclick="applyPresetAction('Pass GO', 200)">Pass GO (+200)</button>
+        <button class="subtract" onclick="applyPresetAction('Fine', -50)">Fine (-50)</button>
+      </div>
+      <div class="row">
+        <button class="subtract" onclick="applyPresetAction('Card', -100)">Card (-100)</button>
+        <button class="subtract" onclick="applyPresetAction('Tax', -200)">Tax (-200)</button>
+      </div>
+
+      <h3>Quick Add</h3>
+      <div class="row">
+        <button class="add" onclick="changeBalance(50)">+50</button>
+        <button class="add" onclick="changeBalance(100)">+100</button>
+        <button class="add" onclick="changeBalance(200)">+200</button>
+        <button class="add" onclick="changeBalance(500)">+500</button>
+      </div>
+
+      <h3>Quick Pay</h3>
+      <div class="row">
+        <button class="subtract" onclick="changeBalance(-50)">-50</button>
+        <button class="subtract" onclick="changeBalance(-100)">-100</button>
+        <button class="subtract" onclick="changeBalance(-200)">-200</button>
+        <button class="subtract" onclick="changeBalance(-500)">-500</button>
+      </div>
 
       <h3>Custom</h3>
       <input id="amount" type="number" placeholder="Amount"/>
-      <button onclick="customChange(true)">Add</button>
-      <button onclick="customChange(false)">Subtract</button>
+      <div class="row">
+        <button class="add" onclick="customChange(true)">Add</button>
+        <button class="subtract" onclick="customChange(false)">Subtract</button>
+      </div>
 
       <h3>Transfer</h3>
       <select id="target">
@@ -194,10 +299,14 @@ function render() {
           i !== state.selected ? `<option value="${i}">${displayName(x)}</option>` : ''
         ).join('')}
       </select>
-      <button onclick="transfer()">Send</button>
+      <div class="row">
+        <button class="primary" onclick="transfer()">Send</button>
+        <button class="secondary" onclick="undoLastAction()" ${state.lastAction ? '' : 'disabled'}>Undo</button>
+      </div>
 
-      <br><br>
-      <button onclick="back()">Back</button>
+      <div class="row">
+        <button class="secondary" onclick="back()">Back</button>
+      </div>
     `;
   }
 
@@ -227,6 +336,8 @@ function updatePiece(i, piece) {
 function startGame() {
   state.startBalance = parseInt(document.getElementById('startBalance').value) || 1500;
   state.players.forEach(p => p.balance = state.startBalance);
+  state.history = [`New game started with £${state.startBalance} per player.`];
+  state.lastAction = null;
   state.screen = 'main';
   render();
 }
@@ -242,32 +353,92 @@ function back() {
   render();
 }
 
+function setLastBalanceAction(playerIndex, amount, label) {
+  state.lastAction = {
+    type: 'balanceChange',
+    playerIndex,
+    amount,
+    label
+  };
+}
+
+function setLastTransferAction(fromIndex, toIndex, amount) {
+  state.lastAction = {
+    type: 'transfer',
+    fromIndex,
+    toIndex,
+    amount
+  };
+}
+
 function changeBalance(amount) {
-  state.players[state.selected].balance += amount;
+  const player = state.players[state.selected];
+  player.balance += amount;
+  setLastBalanceAction(state.selected, amount, `Balance change`);
+  addHistoryEntry(`${displayName(player)} ${amount >= 0 ? 'received' : 'paid'} £${Math.abs(amount)}.`);
+  render();
+}
+
+function applyPresetAction(label, amount) {
+  const player = state.players[state.selected];
+  player.balance += amount;
+  setLastBalanceAction(state.selected, amount, label);
+  addHistoryEntry(`${displayName(player)}: ${label} ${amount >= 0 ? '+' : ''}${amount}.`);
   render();
 }
 
 function customChange(add) {
-  let val = parseInt(document.getElementById('amount').value);
+  const val = parseInt(document.getElementById('amount').value);
   if (!val) return;
-  state.players[state.selected].balance += add ? val : -val;
+  const amount = add ? val : -val;
+  const player = state.players[state.selected];
+  player.balance += amount;
+  setLastBalanceAction(state.selected, amount, 'Custom amount');
+  addHistoryEntry(`${displayName(player)} ${amount >= 0 ? 'received' : 'paid'} £${Math.abs(amount)} (custom).`);
   render();
 }
 
 function transfer() {
-  let val = parseInt(document.getElementById('amount').value);
-  let target = document.getElementById('target').value;
+  const val = parseInt(document.getElementById('amount').value);
+  const target = document.getElementById('target').value;
 
   if (!val || target === '') return;
 
-  state.players[state.selected].balance -= val;
-  state.players[target].balance += val;
+  const fromPlayer = state.players[state.selected];
+  const toPlayer = state.players[target];
 
+  fromPlayer.balance -= val;
+  toPlayer.balance += val;
+
+  setLastTransferAction(state.selected, Number(target), val);
+  addHistoryEntry(`${displayName(fromPlayer)} sent £${val} to ${displayName(toPlayer)}.`);
+  render();
+}
+
+function undoLastAction() {
+  if (!state.lastAction) return;
+
+  const action = state.lastAction;
+
+  if (action.type === 'balanceChange') {
+    state.players[action.playerIndex].balance -= action.amount;
+    addHistoryEntry(`Undid last action for ${displayName(state.players[action.playerIndex])}.`);
+  }
+
+  if (action.type === 'transfer') {
+    state.players[action.fromIndex].balance += action.amount;
+    state.players[action.toIndex].balance -= action.amount;
+    addHistoryEntry(`Undid transfer between ${displayName(state.players[action.fromIndex])} and ${displayName(state.players[action.toIndex])}.`);
+  }
+
+  state.lastAction = null;
   render();
 }
 
 function resetBalances() {
   state.players.forEach(p => p.balance = state.startBalance);
+  state.lastAction = null;
+  addHistoryEntry(`All balances reset to £${state.startBalance}.`);
   render();
 }
 
@@ -275,6 +446,8 @@ function newGame() {
   state.players = [];
   state.screen = 'setup';
   state.selected = null;
+  state.history = [];
+  state.lastAction = null;
   render();
 }
 
