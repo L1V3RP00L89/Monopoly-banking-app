@@ -6,95 +6,165 @@
 <title>Family Banker</title>
 <style>
 body {
-  font-family: -apple-system, sans-serif;
+  font-family: Arial, sans-serif;
   margin: 0;
-  background: #f4f4f4;
+  background: linear-gradient(180deg, #1f6b3a 0%, #15522c 100%);
 }
+
+/* Layout */
 .container {
   padding: 16px;
   max-width: 700px;
   margin: 0 auto;
 }
-.card {
-  background: white;
-  padding: 16px;
-  margin-bottom: 12px;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-button {
-  padding: 14px 16px;
-  margin: 4px;
-  border: none;
-  border-radius: 10px;
-  font-size: 17px;
-  font-weight: 600;
-}
-.primary { background: #007AFF; color: white; }
-.danger { background: #FF3B30; color: white; }
-.add { background: #34C759; color: white; }
-.subtract { background: #FF3B30; color: white; }
-.secondary { background: #E5E5EA; color: #111; }
-.special { background: #FFCC00; color: #111; }
 
+/* Cards (like property cards) */
+.card {
+  background: #f8f1df;
+  padding: 16px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  border: 3px solid #222;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+  position: relative;
+}
+
+/* Property color bar */
+.card::before {
+  content: "";
+  display: block;
+  height: 12px;
+  background: linear-gradient(
+    90deg,
+    #8b4513 0%,
+    #8b4513 14%,
+    #87ceeb 14%,
+    #87ceeb 28%,
+    #d81b60 28%,
+    #d81b60 42%,
+    #f57c00 42%,
+    #f57c00 56%,
+    #e53935 56%,
+    #e53935 70%,
+    #fdd835 70%,
+    #fdd835 84%,
+    #43a047 84%,
+    #43a047 100%
+  );
+  border-radius: 10px 10px 0 0;
+  margin: -16px -16px 12px -16px;
+  border-bottom: 2px solid #222;
+}
+
+/* Buttons */
+button {
+  padding: 16px 18px;
+  margin: 4px;
+  border: 2px solid #222;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 800;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.25);
+}
+
+/* Button styles */
+.primary { background: #c62828; color: white; }
+.danger { background: #8b0000; color: white; }
+.add { background: #2e7d32; color: white; }
+.subtract { background: #b71c1c; color: white; }
+.secondary { background: #fff8e7; color: #222; }
+.special { background: #f4c542; color: #222; }
+
+/* Inputs */
 input, select {
   padding: 12px;
-  margin: 4px 0;
+  margin: 6px 0;
   width: 100%;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  border-radius: 10px;
+  border: 2px solid #222;
   font-size: 16px;
   box-sizing: border-box;
-  background: white;
+  background: #fff8e7;
 }
+
+/* Typography */
 .big {
-  font-size: 30px;
-  font-weight: bold;
+  font-size: 32px;
+  font-weight: 900;
   margin: 6px 0 12px 0;
 }
+
 .small {
   font-size: 14px;
-  color: #666;
+  color: #444;
 }
+
+/* Layout rows */
 .row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 10px;
 }
+
 .row button {
   flex: 1 1 120px;
   margin: 0;
 }
+
+/* Button press feel */
 button:active {
-  transform: scale(0.97);
-  opacity: 0.9;
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.25);
+  opacity: 0.95;
 }
+
 button:disabled {
   opacity: 0.5;
 }
+
+/* Headers */
 h2, h3 {
   margin-top: 0;
 }
+
+/* Player name */
 .player-name {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 900;
 }
+
+/* History */
 .history-list {
   margin-top: 10px;
   padding-left: 18px;
 }
+
 .history-list li {
   margin-bottom: 6px;
 }
+
+/* Message (error / warning) */
 .message {
-  background: #FF3B30;
+  background: #b71c1c;
   color: white;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 12px;
+  border-radius: 10px;
   margin-bottom: 10px;
   text-align: center;
-  font-weight: 600;
+  font-weight: 700;
+}
+
+/* Title styling */
+.game-title {
+  text-align: center;
+  color: white;
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  text-shadow: 2px 2px 0 #000;
 }
 </style>
 </head>
