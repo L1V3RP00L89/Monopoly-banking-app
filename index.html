@@ -134,7 +134,8 @@ let state = {
   history: [],
   lastAction: null,
   message: '',
-  winner: null
+  winner: null,
+  confirmingBankruptcy: false
 };
 
 function save() {
@@ -220,7 +221,7 @@ function render() {
   }
 
   if (state.screen === 'main') {
-    app.innerHTML = `<h2>Banker</h2>`;
+    app.innerHTML = `<h2>Monopoly Banker</h2>`;
 
     const sorted = sortedPlayersWithIndex();
 
@@ -307,10 +308,18 @@ function render() {
       </div>
 
    <div class="row">
-  <button class="danger" onclick="declareBankruptcy()">Declare Bankruptcy</button>
-  <button class="secondary" onclick="back()">Back</button>
+  ${
+    state.confirmingBankruptcy
+      ? `
+        <button class="danger" onclick="declareBankruptcy()">Confirm Bankruptcy</button>
+        <button class="secondary" onclick="cancelBankruptcy()">Cancel</button>
+      `
+      : `
+        <button class="danger" onclick="beginBankruptcy()">Declare Bankruptcy</button>
+        <button class="secondary" onclick="back()">Back</button>
+      `
+  }
 </div>
-    `;
   }
   
     if (state.screen === 'winner') {
@@ -374,11 +383,13 @@ function startGame() {
 function selectPlayer(i) {
   state.selected = i;
   state.screen = 'player';
+  state.confirmingBankruptcy = false;
   render();
 }
 
 function back() {
   state.screen = 'main';
+  state.confirmingBankruptcy = false;
   render();
 }
 
@@ -506,6 +517,7 @@ function newGame() {
   state.lastAction = null;
   state.message = '';
   state.winner = null;
+  state.confirmingBankruptcy = false;
   render();
 }
 
@@ -550,6 +562,17 @@ function playAgain() {
   state.lastAction = null;
   state.message = '';
   state.winner = null;
+  state.confirmingBankruptcy = false;
+  render();
+}
+
+function beginBankruptcy() {
+  state.confirmingBankruptcy = true;
+  render();
+}
+
+function cancelBankruptcy() {
+  state.confirmingBankruptcy = false;
   render();
 }
 
