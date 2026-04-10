@@ -34,6 +34,17 @@ input {
   border: 1px solid #ccc;
 }
 .big { font-size: 28px; font-weight: bold; }
+
+.add {
+  background: #34C759; /* iOS green */
+  color: white;
+}
+
+.subtract {
+  background: #FF3B30; /* iOS red */
+  color: white;
+}
+
 </style>
 </head>
 
@@ -109,10 +120,15 @@ function render() {
     app.innerHTML = `
       <h2>${p.name}</h2>
       <div class="big">£${p.balance}</div>
-
+      
       <h3>Quick</h3>
       <button onclick="changeBalance(50)">+50</button>
+      <button onclick="changeBalance(100)">+100</button>
+      <button onclick="changeBalance(200)">+200</button>
+
       <button onclick="changeBalance(-50)">-50</button>
+      <button onclick="changeBalance(-100)">-100</button>
+      <button onclick="changeBalance(-200)">-200</button>
 
       <h3>Custom</h3>
       <input id="amount" type="number" placeholder="Amount"/>
