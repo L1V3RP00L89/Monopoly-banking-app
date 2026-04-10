@@ -231,13 +231,12 @@ function load() {
   const data = localStorage.getItem('bankerApp');
   if (data) {
     state = JSON.parse(data);
-
     state.players = (state.players || []).map(player => ({
       name: player.name || '',
       piece: player.piece || '',
-      balance: typeof player.balance === 'number' ? player.balance : 1500
+      balance: typeof player.balance === 'number' ? player.balance : 1500,
+      properties: player.properties || ''
     }));
-
     state.history = state.history || [];
     state.lastAction = state.lastAction || null;
     state.message = state.message || '';
@@ -245,7 +244,6 @@ function load() {
     state.confirmingBankruptcy = !!state.confirmingBankruptcy;
   }
 
-  // 👇 FORCE welcome screen every load
   state.screen = 'welcome';
 }
 
@@ -312,9 +310,11 @@ function render() {
   app.innerHTML = '';
   
   if (state.screen === 'welcome') {
+  const hasSavedGame = state.players && state.players.length > 0;
+
   app.innerHTML = `
     <div class="card">
-      <h1 class="game-title">Monopoly Banker</h1>
+      <h2>Welcome to Monopoly Banker</h2>
       <p class="small">
         This app replaces cash and helps you manage money quickly during your Monopoly game.
       </p>
@@ -324,13 +324,15 @@ function render() {
         <li>Add players and assign pieces</li>
         <li>Tap a player to manage their money</li>
         <li>Use quick buttons for fast gameplay</li>
-        <li>Transfer money between players easily</li>
+        <li>Transfer money between players or the bank</li>
+        <li>Track owned properties for each player</li>
         <li>Declare bankruptcy when a player is out</li>
       </ul>
     </div>
 
     <div class="row">
-      <button class="primary" onclick="goToSetup()">Start Game Setup</button>
+      ${hasSavedGame ? `<button class="primary" onclick="resumeGame()">Continue Game</button>` : ''}
+      <button class="secondary" onclick="goToSetup()">New Game Setup</button>
     </div>
   `;
 }
@@ -497,7 +499,12 @@ function render() {
 }
 
 function addPlayer() {
-  state.players.push({ name: '', piece: '', balance: state.startBalance });
+  state.players.push({
+    name: '',
+    piece: '',
+    balance: state.startBalance,
+    properties: ''
+  });
   render();
 }
 
@@ -710,7 +717,23 @@ function declareBankruptcy() {
 }
 
 function goToSetup() {
+  state.players = [];
+  state.selected = null;
+  state.history = [];
+  state.lastAction = null;
+  state.message = '';
+  state.winner = null;
+  state.confirmingBankruptcy = false;
   state.screen = 'setup';
+  render();
+}
+
+function resumeGame() {
+  if (state.winner) {
+    state.screen = 'winner';
+  } else {
+    state.screen = 'main';
+  }
   render();
 }
 
