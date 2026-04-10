@@ -166,6 +166,11 @@ h2, h3 {
   margin-bottom: 16px;
   text-shadow: 2px 2px 0 #000;
 }
+.confetti {
+  text-align: center;
+  font-size: 32px;
+  margin: 10px 0;
+}
 </style>
 </head>
 
@@ -468,6 +473,7 @@ function render() {
     app.innerHTML = `
       <div class="card">
         <h2>Game Over</h2>
+        <div class="confetti">🎉🎉🎉🎉🎉</div>
         <div class="big">🏆 Winner: ${displayName(state.winner)}</div>
         <div class="small">Everyone else has gone bankrupt.</div>
       </div>
