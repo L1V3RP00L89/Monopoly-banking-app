@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<h1 class="game-title">Monopoly Banker</h1>
 <style>
 body {
   font-family: Arial, sans-serif;
@@ -364,40 +363,40 @@ function render() {
   }
 
   if (state.screen === 'main') {
-    app.innerHTML = `
+  app.innerHTML = `<h1 class="game-title">Monopoly Banker</h1>`;
 
-    const sorted = sortedPlayersWithIndex();
+  const sorted = sortedPlayersWithIndex();
 
-    sorted.forEach(({ player, index }, rank) => {
-      app.innerHTML += `
-        <div class="card">
-          <div class="small">#${rank + 1}</div>
-          <div class="player-name">${displayName(player)}</div>
-          <div class="big">£${player.balance}</div>
-          <button class="primary" onclick="selectPlayer(${index})">Open</button>
-        </div>
-      `;
-    });
-
+  sorted.forEach(({ player, index }, rank) => {
     app.innerHTML += `
-      <div class="row">
-        <button class="secondary" onclick="undoLastAction()" ${state.lastAction ? '' : 'disabled'}>Undo Last Action</button>
-        <button class="secondary" onclick="resetBalances()">Reset Balances</button>
-      </div>
-      <div class="row">
-        <button class="danger" onclick="newGame()">New Game</button>
-      </div>
-
       <div class="card">
-        <h3>Recent Activity</h3>
-        ${state.history.length ? `
-          <ul class="history-list">
-            ${state.history.slice(0, 8).map(item => `<li>${item}</li>`).join('')}
-          </ul>
-        ` : `<div class="small">No activity yet.</div>`}
+        <div class="small">#${rank + 1}</div>
+        <div class="player-name">${displayName(player)}</div>
+        <div class="big">£${player.balance}</div>
+        <button class="primary" onclick="selectPlayer(${index})">Open</button>
       </div>
     `;
-  }
+  });
+
+  app.innerHTML += `
+    <div class="row">
+      <button class="secondary" onclick="undoLastAction()" ${state.lastAction ? '' : 'disabled'}>Undo Last Action</button>
+      <button class="secondary" onclick="resetBalances()">Reset Balances</button>
+    </div>
+    <div class="row">
+      <button class="danger" onclick="newGame()">New Game</button>
+    </div>
+
+    <div class="card">
+      <h3>Recent Activity</h3>
+      ${state.history.length ? `
+        <ul class="history-list">
+          ${state.history.slice(0, 8).map(item => `<li>${item}</li>`).join('')}
+        </ul>
+      ` : `<div class="small">No activity yet.</div>`}
+    </div>
+  `;
+}
 
   if (state.screen === 'player') {
     const p = state.players[state.selected];
