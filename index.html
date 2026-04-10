@@ -312,6 +312,30 @@ function render() {
 </div>
     `;
   }
+  
+    if (state.screen === 'winner') {
+    app.innerHTML = `
+      <div class="card">
+        <h2>Game Over</h2>
+        <div class="big">🏆 Winner: ${displayName(state.winner)}</div>
+        <div class="small">Everyone else has gone bankrupt.</div>
+      </div>
+
+      <div class="row">
+        <button class="primary" onclick="playAgain()">Play Again</button>
+        <button class="secondary" onclick="viewFinalBoard()">View Final Board</button>
+      </div>
+
+      <div class="card">
+        <h3>Recent Activity</h3>
+        ${state.history.length ? `
+          <ul class="history-list">
+            ${state.history.slice(0, 10).map(item => `<li>${item}</li>`).join('')}
+          </ul>
+        ` : `<div class="small">No activity yet.</div>`}
+      </div>
+    `;
+  }
 
   save();
 }
@@ -341,6 +365,8 @@ function startGame() {
   state.players.forEach(p => p.balance = state.startBalance);
   state.history = [`New game started with £${state.startBalance} per player.`];
   state.lastAction = null;
+  state.message = '';
+  state.winner = null;
   state.screen = 'main';
   render();
 }
@@ -491,9 +517,42 @@ function declareBankruptcy() {
   state.lastAction = null;
   addHistoryEntry(`${playerName} was declared bankrupt and removed from the game.`);
 
+  if (checkForWinner()) {
+    render();
+    return;
+  }
+
   state.selected = null;
   state.screen = 'main';
 
+  render();
+}
+
+function checkForWinner() {
+  if (state.players.length === 1) {
+    state.winner = state.players[0];
+    state.screen = 'winner';
+    state.selected = null;
+    state.message = '';
+    addHistoryEntry(`${displayName(state.winner)} won the game!`);
+    return true;
+  }
+  return false;
+}
+
+function playAgain() {
+  state.players = [];
+  state.screen = 'setup';
+  state.selected = null;
+  state.history = [];
+  state.lastAction = null;
+  state.message = '';
+  state.winner = null;
+  render();
+}
+
+function viewFinalBoard() {
+  state.screen = 'main';
   render();
 }
 
