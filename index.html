@@ -147,7 +147,6 @@ let state = {
   message: '',
   winner: null,
   confirmingBankruptcy: false,
-  hasSeenWelcome: false
 };
 
 function save() {
@@ -158,17 +157,23 @@ function load() {
   const data = localStorage.getItem('bankerApp');
   if (data) {
     state = JSON.parse(data);
+
     state.players = (state.players || []).map(player => ({
       name: player.name || '',
       piece: player.piece || '',
       balance: typeof player.balance === 'number' ? player.balance : 1500
     }));
+
     state.history = state.history || [];
     state.lastAction = state.lastAction || null;
     state.message = state.message || '';
     state.winner = state.winner || null;
     state.confirmingBankruptcy = !!state.confirmingBankruptcy;
   }
+
+  // 👇 FORCE welcome screen every load
+  state.screen = 'welcome';
+}
 
   if (!state.hasSeenWelcome) {
     state.screen = 'welcome';
@@ -636,7 +641,6 @@ function declareBankruptcy() {
 
 function goToSetup() {
   state.screen = 'setup';
-  state.hasSeenWelcome = true;
   render();
 }
 
