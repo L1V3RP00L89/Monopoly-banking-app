@@ -455,15 +455,16 @@ function render() {
         <button class="subtract" onclick="customChange(false)">Subtract</button>
       </div>
 
-      <h3>Owned Properties</h3>
-      <textarea id="properties" placeholder="Example: Park Lane, Kings Cross, Electric Company" oninput="updateProperties(this.value)">${p.properties || ''}</textarea>
-
       <h3>Transfer</h3>
       <select id="target">
         ${state.players.map((x, i) =>
           i !== state.selected ? `<option value="${i}">${displayName(x)}</option>` : ''
         ).join('')}
       </select>
+      
+      <h3>Owned Properties</h3>
+      <textarea id="properties" placeholder="Example: Park Lane, Kings Cross, Electric Company" oninput="updateProperties(this.value)">${p.properties || ''}</textarea>
+      
       <div class="row">
         <button class="primary" onclick="transfer()">Send</button>
         <button class="secondary" onclick="undoLastAction()" ${state.lastAction ? '' : 'disabled'}>Undo</button>
