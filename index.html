@@ -140,7 +140,7 @@ const PIECE_EMOJIS = {
 let state = {
   players: [],
   startBalance: 1500,
-  screen: 'setup',
+  screen: 'welcome',
   selected: null,
   history: [],
   lastAction: null,
@@ -231,6 +231,30 @@ function checkForWinner() {
 function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
+  
+  if (state.screen === 'welcome') {
+  app.innerHTML = `
+    <div class="card">
+      <h2>Welcome to Monopoly Banker</h2>
+      <p class="small">
+        This app replaces cash and helps you manage money quickly during your Monopoly game.
+      </p>
+
+      <h3>How to use</h3>
+      <ul class="history-list">
+        <li>Add players and assign pieces</li>
+        <li>Tap a player to manage their money</li>
+        <li>Use quick buttons for fast gameplay</li>
+        <li>Transfer money between players easily</li>
+        <li>Declare bankruptcy when a player is out</li>
+      </ul>
+    </div>
+
+    <div class="row">
+      <button class="primary" onclick="goToSetup()">Start Game Setup</button>
+    </div>
+  `;
+}
 
   if (state.screen === 'setup') {
     app.innerHTML = `
@@ -260,7 +284,7 @@ function render() {
   }
 
   if (state.screen === 'main') {
-    app.innerHTML = `<h2>Monopoly Banker</h2>`;
+    app.innerHTML = `<h2>🎲 Monopoly Banker</h2>`;
 
     const sorted = sortedPlayersWithIndex();
 
@@ -602,6 +626,11 @@ function declareBankruptcy() {
 
   state.selected = null;
   state.screen = 'main';
+  render();
+}
+
+function goToSetup() {
+  state.screen = 'setup';
   render();
 }
 
